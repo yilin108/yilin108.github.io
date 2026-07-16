@@ -1,0 +1,52 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const root = path.resolve(__dirname, '..');
+const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
+
+const index = read('index.html');
+const scripts = read('static/js/scripts.js');
+const mainCss = read('static/css/main.css');
+const profile = read('contents/改这里.yml');
+const license = read('LICENSE');
+const gitignore = read('.gitignore');
+
+assert.equal(index.includes('polyfill.io'), false, 'polyfill.io must not be loaded');
+assert.equal(index.includes('MathJax'), false, 'should not load MathJax');
+assert.equal(index.includes('marked.min.js'), false, 'should not need markdown parser');
+assert.equal(index.includes('tex-svg.js'), false, 'should not load academic math bundle');
+assert.equal(fs.existsSync(path.join(root, 'static/js/marked.min.js')), false, 'marked.min.js should be removed');
+assert.equal(fs.existsSync(path.join(root, 'static/js/tex-svg.js')), false, 'tex-svg.js should be removed');
+assert.equal(fs.existsSync(path.join(root, 'static/assets/background/background_0.jpeg')), false, 'old template background_0 should be removed');
+assert.equal(fs.existsSync(path.join(root, 'static/assets/background/background_1.jpeg')), false, 'old template background_1 should be removed');
+assert.doesNotMatch(license, /Sen Li/, 'LICENSE should not keep original author copyright');
+assert.match(license, /yilin108/, 'LICENSE should use current owner');
+assert.match(index, /<img\b[^>]*\balt="/, 'profile image should include alt text');
+assert.match(index, /id="hero-brand"/, 'hero brand should be updatable from profile');
+assert.match(index, /id="hero-tagline"/, 'hero tagline should be updatable from profile');
+assert.match(index, /<main id="sections"><\/main>/, 'content sections should be rendered into a single sections container');
+assert.match(scripts, /改这里\.yml/, 'site should load the single editable profile file');
+assert.match(scripts, /function\s+renderPage/, 'profile should drive page render');
+assert.match(scripts, /function\s+getBackgrounds/, 'backgrounds should be readable from profile');
+assert.match(scripts, /function\s+initBackgroundSlideshow/, 'background slideshow should be initialized from JS');
+assert.match(scripts, /function\s+markSiteReady/, 'JS should expose a loading completion transition');
+assert.match(scripts, /\.finally\(\(\)\s*=>\s*markSiteReady\(\)\)/, 'site should leave loading state even if content loading fails');
+assert.match(mainCss, /prefers-reduced-motion:\s*reduce/, 'slideshow should respect reduced motion preferences');
+assert.match(mainCss, /#avatar img[\s\S]*height:\s*auto/, 'avatar CSS should preserve the original image ratio');
+assert.match(mainCss, /\.top-section[\s\S]*height:\s*25rem/, 'hero should keep its full original height');
+assert.match(gitignore, /^\.superpowers\/$/m, '.superpowers companion artifacts should be ignored');
+assert.match(profile, /教育背景:/, 'profile should include education');
+assert.match(profile, /实习:/, 'profile should include internships');
+assert.match(scripts, /getListSection/, 'education internships and projects should be dynamic lists');
+assert.match(scripts, /function\s+renderEducation/, 'education section should be renderable');
+assert.match(scripts, /function\s+renderInternships/, 'internship section should be renderable');
+assert.match(profile, /姓名:/, 'profile should include name');
+assert.match(profile, /项目:/, 'profile should include projects');
+assert.match(profile, /技能:/, 'profile should include skills');
+assert.match(profile, /背景图:/, 'profile should include background images');
+assert.match(profile, /邮箱:/, 'profile should include email');
+assert.ok(fs.existsSync(path.join(root, 'static/assets/background/1.jpeg')), 'current background 1.jpeg should exist');
+assert.ok(fs.existsSync(path.join(root, 'static/assets/background/2.jpeg')), 'current background 2.jpeg should exist');
+
+console.log('site quality checks passed');
